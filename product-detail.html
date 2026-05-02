@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    
+    <title id="metaTitle">Loading...</title>
+    
+    <!-- Dynamic SEO Meta Tags -->
+    <meta name="description" id="metaDescription" content="">
+    <meta name="keywords" id="metaKeywords" content="">
+    <meta name="author" id="metaAuthor" content="">
+    
+    <link rel="shortcut icon" id="metaFavicon" href="image/logo.png" type="image/x-icon">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" id="ogTitle" content="">
+    <meta property="og:description" id="ogDescription" content="">
+    <meta property="og:image" id="ogImage" content="">
+    <meta property="og:type" content="website">
+
+    <!-- Tailwind CSS + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6769563684859866"
+        crossorigin="anonymous"></script>
+
+    <!-- Firebase (essential for orders) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-85BDT26PCK"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-85BDT26PCK');
+    </script>
+<style>
+   .order-loader {
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.65);
+    z-index: 9999;
+    color: #fff;
+}
+
+.loader-box {
+    text-align: center;
+    background: #111;
+    padding: 25px;
+    border-radius: 14px;
+    width: 260px;
+}
+
+.spinner {
+    width: 45px;
+    height: 45px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loader-text {
+    font-size: 14px;
+    margin-bottom: 12px;
+    opacity: 0.9;
+}
+
+.loader-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.step {
+    opacity: 0.4;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    opacity: 1;
+    font-weight: bold;
+}
+</style>
+    <style>
+        /* ----- all original custom styling preserved (status slider, skeleton, gallery, modal, etc) ----- */
+        .status-slider {
+            background: linear-gradient(90deg, #1e3a8a, #3730a3);
+            color: white;
+            overflow: hidden;
+            position: relative;
+            height: 32px;
+        }
+
+        .status-slider-content {
+            display: flex;
+            animation: slide 30s linear infinite;
+            white-space: nowrap;
+        }
+
+        .status-item {
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        @keyframes slide {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 40;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .nav-item.active {
+            color: #4f46e5;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-image {
+            height: 400px;
+            width: 100%;
+        }
+
+        .skeleton-text {
+            height: 20px;
+            margin-bottom: 10px;
+        }
+
+        .skeleton-text.short {
+            width: 60%;
+        }
+
+        .product-detail-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .product-detail-container.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .gallery-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            background: #f9fafb;
+        }
+
+        .main-gallery {
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+        }
+
+        .gallery-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .gallery-slide.active {
+            opacity: 1;
+        }
+
+        .gallery-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .gallery-thumbnails {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            object-fit: cover;
+        }
+
+        .thumbnail.active {
+            border-color: #4f46e5;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .gallery-prev {
+            left: 16px;
+        }
+
+        .gallery-next {
+            right: 16px;
+        }
+
+        .gallery-indicators {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .gallery-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+
+        .gallery-indicator.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        .shop-info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .shop-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .shop-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .shop-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .contact-seller-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .product-specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .spec-item {
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .spec-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .spec-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .tag-badge {
+            background: #e0e7ff;
+            color: #4f46e5;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-right: 6px;
+            display: inline-block;
+        }
+
+        .stock-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stock-in {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .buy-now-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .buy-now-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .share-product-btn {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .share-product-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        .order-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .order-modal.active {
+            display: flex;
+        }
+
+        .order-modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .order-modal.active .order-modal-content {
+            transform: scale(1);
+        }
+
+        .order-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-modal-body {
+            padding: 24px;
+        }
+
+        .order-form-group {
+            margin-bottom: 20px;
+        }
+
+        .order-form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .order-form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .order-modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+        }
+
+        .order-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .order-submit {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .share-modal.active {
+            display: flex;
+        }
+
+        .share-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .share-platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .share-platform {
+            padding: 12px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+        }
+
+        .share-platform-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        .whatsapp-share {
+            background: #25D366;
+            color: white;
+        }
+
+        .facebook-share {
+            background: #1877F2;
+            color: white;
+        }
+
+        .twitter-share {
+            background: #1DA1F2;
+            color: white;
+        }
+
+        .copy-share {
+            background: #6B7280;
+            color: white;
+        }
+
+        .share-link-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+
+    <!-- top ribbon & status slider (unchanged branding) -->
+    <nav class="fixed top-0 left-0 w-full z-50 bg-white shadow-sm border-b border-gray-100">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center py-1 text-sm">
+            <div class="w-full overflow-hidden">
+                <div class="flex gap-10 animate-marquee whitespace-nowrap justify-center">
+                    <span><i class="fas fa-truck"></i> RS. 250 ONLY SHIPPING ON ALL ORDERS!</span>
+                    <span><i class="fas fa-gift"></i> WELCOME TO 8th Wonder Bazaar — Shop with confidence!</span>
+                </div>
+            </div>
+        </div>
+        <div class="status-slider">
+            <div class="status-slider-content">
+                <div class="status-item"><i class="fas fa-bolt text-yellow-300 mr-2"></i>🔥 HOT DEALS! Limited time
+                    offers</div>
+                <div class="status-item"><i class="fas fa-shipping-fast text-green-300 mr-2"></i>🚚 Free shipping on
+                    orders over Rs. 2000</div>
+                <div class="status-item"><i class="fas fa-tag text-red-300 mr-2"></i>💥 FLASH SALE! Up to 70% OFF</div>
+                <div class="status-item"><i class="fas fa-shield-alt text-blue-300 mr-2"></i>🔒 Secure payment</div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="flex items-center space-x-2">
+                    <img id="navLogo" src="image/logo.png" width="40" height="40" class="w-10 h-10 rounded-full"
+                        alt="Logo">
+                    <span id="brandName" class="text-lg font-bold text-indigo-600 hidden sm:inline">8th Wonder
+                        Bazaar</span>
+                </a>
+            </div>
+            <form id="searchForm" class="hidden lg:flex flex-grow max-w-xl mx-4">
+                <div class="relative w-full">
+                    <input type="search" id="searchInput" placeholder="Search products..."
+                        class="w-full pl-4 pr-20 py-2 border border-indigo-300 rounded-full text-sm">
+                    <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-indigo-600"><i
+                            class="fas fa-search"></i></button>
+                </div>
+            </form>
+            <div class="flex items-center gap-4">
+                <button id="mobileSearchBtn" class="lg:hidden text-gray-700"><i
+                        class="fas fa-search text-lg"></i></button>
+                <a href="#" id="homeLink" class="text-gray-700 hover:text-indigo-600"><i
+                        class="fas fa-home text-lg"></i></a>
+            </div>
+        </div>
+        <div id="mobileSearchContainer" class="hidden mt-3 px-4 pb-2">
+            <form id="mobileSearchForm"><input type="search" id="mobileSearchInput" placeholder="Search..."
+                    class="w-full p-2 border rounded-full"></form>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-28 px-4" id="mainContent">
+        <div id="loadingState" class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <div class="skeleton-image skeleton"></div>
+                </div>
+                <div>
+                    <div class="skeleton-text skeleton"></div>
+                    <div class="skeleton-text skeleton short"></div>
+                    <div class="skeleton-text skeleton"></div>
+                </div>
+            </div>
+        </div>
+        <div id="productDetailContainer" class="product-detail-container max-w-6xl mx-auto hidden"></div>
+        <div id="productNotFound" class="max-w-6xl mx-auto hidden text-center py-12"><i
+                class="fas fa-exclamation-triangle text-6xl text-yellow-500 mb-4"></i>
+            <h2 class="text-2xl font-bold">Product Not Found</h2><button onclick="window.history.back()"
+                class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg">Go Back</button>
+        </div>
+    </div>
+
+    <!-- Footer with dynamic content loaded from shopMeta -->
+    <footer class="bg-gradient-to-br from-[#0B1F3A] to-[#1a3352] text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
+    
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    
+                <!-- Logo + Tagline -->
+                <div>
+                    <img id="footerLogo" src="image/logo.png" class="h-12 mb-2" alt="Logo">
+                    <p id="footerTagline" class="text-sm text-gray-300">
+                        Loading...
+                    </p>
+                </div>
+    
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="font-semibold mb-3">Quick Links</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" id="linkAbout">About Us</a></li>
+                        <li><a href="#" id="linkPrivacy">Privacy Policy</a></li>
+                        <li><a href="#" id="linkContact">Contact Us</a></li>
+                    </ul>
+                </div>
+    
+                <!-- Support -->
+                <div>
+                    <h3 class="font-semibold mb-3">Support</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" id="linkReturn">Return Policy</a></li>
+                        <li><a href="#" id="linkShipping">Shipping Info</a></li>
+                    </ul>
+                </div>
+    
+                <!-- Social -->
+                <div>
+                    <h3 class="font-semibold mb-3">Follow Us</h3>
+                    <div id="socialLinks" class="flex gap-3">
+                        <!-- Dynamic social links -->
+                    </div>
+                </div>
+    
+            </div>
+    
+            <div class="border-t border-white/10 mt-8 pt-6 text-center text-xs text-gray-400">
+                © <span id="footerYear"></span> <span id="footerBrand"></span>. All rights reserved.
+            </div>
+    
+        </div>
+        </footer>
+    <!-- Order Modal (Buy Now) -->
+    <div id="orderModal" class="order-modal">
+        <div class="order-modal-content">
+            <div class="order-modal-header">
+                <h3 class="font-bold">Complete Your Purchase</h3><button id="orderClose"
+                    class="text-2xl">&times;</button>
+            </div>
+            <div class="order-modal-body">
+                <form id="orderForm"><input type="hidden" id="orderProductId">
+                    <div class="order-form-group"><label class="order-form-label">Full Name *</label><input type="text"
+                            id="customerName" class="order-form-input" required></div>
+                    <div class="order-form-group"><label class="order-form-label">Phone Number *</label><input
+                            type="tel" id="customerPhone" class="order-form-input" required></div>
+                    <div class="order-form-group"><label class="order-form-label">Email *</label><input type="email"
+                            id="customerEmail" class="order-form-input" required></div>
+                    <div class="order-form-group"><label class="order-form-label">Shipping Address *</label><textarea
+                            id="shippingAddress" class="order-form-input" rows="2" required></textarea></div>
+                    <div class="order-form-group"><label class="order-form-label">Quantity *</label><input type="number"
+                            id="orderQuantity" class="order-form-input" min="1" value="1"></div>
+                    <div class="order-form-group"><label>Notes (optional)</label><textarea id="orderNotes"
+                            class="order-form-input" rows="2"></textarea></div>
+                </form>
+            </div>
+            <div class="order-modal-footer"><button id="orderCancel"
+                    class="order-btn bg-gray-200">Cancel</button><button id="orderSubmit"
+                    class="order-btn order-submit">Place Order</button></div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="share-modal">
+        <div class="share-modal-content">
+            <h3 class="text-xl font-bold">Share product</h3><input type="text" id="shareLinkInput"
+                class="share-link-input" readonly>
+            <div class="share-platforms-grid">
+                <div class="share-platform" data-platform="whatsapp">
+                    <div class="share-platform-icon whatsapp-share"><i class="fab fa-whatsapp"></i></div>
+                    <span>WhatsApp</span>
+                </div>
+                <div class="share-platform" data-platform="facebook">
+                    <div class="share-platform-icon facebook-share"><i class="fab fa-facebook-f"></i></div>
+                    <span>FB</span>
+                </div>
+                <div class="share-platform" data-platform="twitter">
+                    <div class="share-platform-icon twitter-share"><i class="fab fa-twitter"></i></div><span>X</span>
+                </div>
+                <div class="share-platform" data-platform="copy">
+                    <div class="share-platform-icon copy-share"><i class="fas fa-link"></i></div><span>Copy</span>
+                </div>
+            </div><button id="shareCancelBtn" class="bg-gray-200 px-4 py-2 rounded-lg w-full">Close</button>
+        </div>
+    </div>
+    <div id="orderLoader" class="order-loader">
+        <div class="loader-box">
+    
+            <div class="spinner"></div>
+    
+            <div class="loader-text" id="loaderText">
+                Placing your order...
+            </div>
+    
+            <div class="loader-steps">
+                <div class="step active" id="step1">✔ Placing</div>
+                <div class="step" id="step2">📦 Packing</div>
+                <div class="step" id="step3">🚚 Finalizing</div>
+            </div>
+    
+        </div>
+        </div>
+    <div id="toast" class="toast"></div>
+    <div class="bottom-nav"><a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a><a
+            href="#" id="bottomOrdersLink" class="nav-item"><i class="fas fa-shopping-bag"></i><span>Shop</span></a><a
+            href="index.html" class="nav-item"><i class="fas fa-user"></i><span>Account</span></a></div>
+
+    <script type="module">
+        // Import shopMeta from external module
+        import shopMeta from './shopMetaPage.js';
+
+        // Firebase config - same as original
+        const firebaseConfig = { apiKey: "AIzaSyD78wa9P1xdo030OSnNdbxzN_3IUh8NdCU", authDomain: "doorstep-3ee75.firebaseapp.com", databaseURL: "https://doorstep-3ee75-default-rtdb.firebaseio.com", projectId: "doorstep-3ee75", storageBucket: "doorstep-3ee75.firebasestorage.app", messagingSenderId: "986043366341", appId: "1:986043366341:web:96af99833288c54b11a9ac", measurementId: "G-655JN20RFJ" };
+
+        // Initialize Firebase only if not already initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        let currentProduct = null;
+        let currentShop = null;
+
+        // Apply dynamic meta data from shopMeta
+        function applyShopMetaData() {
+            const meta = shopMeta;
+            if (meta.website) {
+                // Update page title
+                document.title = `${meta.website.name} | Secure Checkout`;
+                // Update meta description
+                const metaDesc = document.getElementById('dynamicDescription') || document.querySelector('meta[name="description"]');
+                if (metaDesc) metaDesc.setAttribute('content', meta.website.description);
+                // Update brand names
+                const brandSpans = document.querySelectorAll('#brandName');
+                brandSpans.forEach(el => { if (el) el.textContent = meta.website.name; });
+                // Update footer tagline
+                const taglineEl = document.getElementById('footerTagline');
+                if (taglineEl) taglineEl.textContent = meta.website.tagline;
+                // Update copyright year and name
+                const copyrightEl = document.querySelector('footer .border-t div');
+                if (copyrightEl) {
+                    const year = new Date().getFullYear();
+                    copyrightEl.textContent = `© ${year} ${meta.website.name}. All rights reserved.`;
+                }
+                // Update author meta
+                const authorMeta = document.querySelector('meta[name="author"]');
+                if (authorMeta) authorMeta.setAttribute('content', meta.website.name);
+            }
+
+            if (meta.contact && meta.contact.social) {
+                const socialContainer = document.getElementById('socialLinks');
+                if (socialContainer) {
+                    socialContainer.innerHTML = '';
+                    const socialIcons = {
+                        facebook: 'fab fa-facebook-f',
+                        instagram: 'fab fa-instagram',
+                        whatsapp: 'fab fa-whatsapp'
+                    };
+                    if (meta.contact.social.facebook) {
+                        socialContainer.innerHTML += `<a href="${meta.contact.social.facebook}" target="_blank" class="bg-white/20 p-2 rounded-full"><i class="${socialIcons.facebook}"></i></a>`;
+                    }
+                    if (meta.contact.social.instagram) {
+                        socialContainer.innerHTML += `<a href="${meta.contact.social.instagram}" target="_blank" class="bg-white/20 p-2 rounded-full"><i class="${socialIcons.instagram}"></i></a>`;
+                    }
+                    if (meta.contact.social.whatsapp) {
+                        socialContainer.innerHTML += `<a href="${meta.contact.social.whatsapp}" target="_blank" class="bg-white/20 p-2 rounded-full"><i class="${socialIcons.whatsapp}"></i></a>`;
+                    }
+                }
+            }
+
+            // Setup footer links to open meta pages (using localStorage to pass data)
+            const aboutLink = document.getElementById('aboutUsLink');
+            const privacyLink = document.getElementById('privacyLink');
+            const contactLink = document.getElementById('contactUsLink');
+
+            if (aboutLink) {
+                aboutLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.setItem('shopMetaPage', JSON.stringify({ type: 'about', data: shopMeta.about }));
+                    window.location.href = 'shopMeta.html';
+                });
+            }
+            if (privacyLink) {
+                privacyLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.setItem('shopMetaPage', JSON.stringify({ type: 'privacy', data: shopMeta.privacyPolicy }));
+                    window.location.href = 'shopMeta.html';
+                });
+            }
+            if (contactLink) {
+                contactLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.setItem('shopMetaPage', JSON.stringify({ type: 'contact', data: shopMeta.contact }));
+                    window.location.href = 'shopMeta.html';
+                });
+            }
+        }
+
+        // toast helper
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.remove('error');
+            if (type === 'error') toast.classList.add('error');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ========== IMAGE GALLERY MANAGER ==========
+        const Gallery = {
+            images: [], currentIndex: 0,
+            init(imagesArr) {
+                this.images = imagesArr.filter(img => img && typeof img === 'string' && !img.includes('undefined') && img.length > 5);
+                if (this.images.length === 0) this.images = ['https://via.placeholder.com/500x400/EFEFEF/999999?text=No+Image'];
+                this.currentIndex = 0;
+            },
+            render() {
+                if (!this.images.length) return `<div class="p-10 text-center">No image</div>`;
+                return `<div class="gallery-container"><div class="main-gallery" id="mainGallery">${this.images.map((img, i) => `<div class="gallery-slide ${i === 0 ? 'active' : ''}"><img src="${img}" class="gallery-image" onerror="this.src='https://via.placeholder.com/500x400/EFEFEF/999999?text=Error'"></div>`).join('')}${this.images.length > 1 ? `<button class="gallery-nav gallery-prev"><i class="fas fa-chevron-left"></i></button><button class="gallery-nav gallery-next"><i class="fas fa-chevron-right"></i></button><div class="gallery-indicators">${this.images.map((_, idx) => `<div class="gallery-indicator ${idx === 0 ? 'active' : ''}" data-idx="${idx}"></div>`).join('')}</div>` : ''}</div>${this.images.length > 1 ? `<div class="gallery-thumbnails">${this.images.map((img, idx) => `<img src="${img}" class="thumbnail ${idx === 0 ? 'active' : ''}" data-idx="${idx}">`).join('')}</div>` : ''}</div>`;
+            },
+            attachEvents() {
+                document.querySelectorAll('.gallery-prev').forEach(btn => btn.addEventListener('click', () => this.changeSlide(-1)));
+                document.querySelectorAll('.gallery-next').forEach(btn => btn.addEventListener('click', () => this.changeSlide(1)));
+                document.querySelectorAll('.gallery-indicator, .thumbnail').forEach(el => el.addEventListener('click', (e) => {
+                    let idx = e.currentTarget.getAttribute('data-idx');
+                    if (idx !== null) this.setSlide(parseInt(idx));
+                }));
+            },
+            changeSlide(delta) { let newIdx = (this.currentIndex + delta + this.images.length) % this.images.length; this.setSlide(newIdx); },
+            setSlide(idx) {
+                this.currentIndex = idx;
+                document.querySelectorAll('.gallery-slide').forEach((slide, i) => slide.classList.toggle('active', i === idx));
+                document.querySelectorAll('.gallery-indicator').forEach((ind, i) => ind.classList.toggle('active', i === idx));
+                document.querySelectorAll('.thumbnail').forEach((thumb, i) => thumb.classList.toggle('active', i === idx));
+            }
+        };
+
+
+
+        async function submitOrder(orderData) {
+                const loader = document.getElementById('orderLoader');
+                const text = document.getElementById('loaderText');
+
+                const step1 = document.getElementById('step1');
+                const step2 = document.getElementById('step2');
+                const step3 = document.getElementById('step3');
+
+                try {
+                    if (loader) loader.style.display = 'flex';
+
+                    // STEP 1: Placing order
+                    text.innerText = "Placing your order...";
+                    step1.classList.add('active');
+
+                    const clean = {
+                        ...orderData,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'pending'
+                    };
+
+                    await new Promise(r => setTimeout(r, 800)); // UX delay
+
+                    // STEP 2: Packing
+                    text.innerText = "Packing your order...";
+                    step2.classList.add('active');
+
+                    await new Promise(r => setTimeout(r, 1200)); // simulate processing
+
+                    // STEP 3: Finalizing
+                    text.innerText = "Finalizing shipment...";
+                    step3.classList.add('active');
+
+                    await db.collection('orders').add(clean);
+
+                    await new Promise(r => setTimeout(r, 800));
+
+                    showToast('Order placed successfully!', 'success');
+
+                    document.getElementById('orderModal').classList.remove('active');
+
+                    setTimeout(() => {
+                        window.location.href = `index.html?order=success`;
+                    }, 1000);
+
+                    return { success: true };
+
+                } catch (e) {
+                    console.error(e);
+                    showToast('Error placing order: ' + e.message, 'error');
+                    return { success: false };
+
+                } finally {
+                    if (loader) loader.style.display = 'none';
+
+                    // reset steps
+                    [step1, step2, step3].forEach(s => s.classList.remove('active'));
+                }
+            }
+            
+            // Load product from URL param (Firestore)
+        async function loadProduct() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            if (!productId) { showNotFound(); return; }
+            try {
+                const doc = await db.collection('products').doc(productId).get();
+                if (doc.exists) {
+                    let data = doc.data();
+                    currentProduct = { id: doc.id, ...data, images: data.images && Array.isArray(data.images) ? data.images : (data.image ? [data.image] : []) };
+                    if (currentProduct.images.length === 0 && currentProduct.imageUrl) currentProduct.images = [currentProduct.imageUrl];
+                    await loadShopInfo(currentProduct.ownerId);
+                    renderProductDetail();
+                } else { showNotFound(); }
+            } catch (e) { console.warn(e); showNotFound(); }
+        }
+
+        async function loadShopInfo(ownerId) {
+            if (!ownerId) { currentShop = { name: shopMeta.website.name, phone: shopMeta.contact.phone, logo: "image/logo.png", description: shopMeta.website.tagline }; return; }
+            try {
+                const shopDoc = await db.collection('shops').doc(ownerId).get();
+                if (shopDoc.exists) currentShop = { id: shopDoc.id, ...shopDoc.data() };
+                else currentShop = { name: shopMeta.website.name, phone: shopMeta.contact.phone, logo: "image/logo.png", description: shopMeta.website.tagline };
+            } catch (e) { currentShop = { name: shopMeta.website.name, phone: shopMeta.contact.phone, logo: "image/logo.png" }; }
+        }
+
+        function renderProductDetail() {
+            const container = document.getElementById('productDetailContainer');
+            const p = currentProduct;
+            const price = parseFloat(p.price) || 0;
+            Gallery.init(p.images);
+            const tagsHTML = (p.tags && p.tags.length) ? p.tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '';
+            const specs = [];
+            if (p.material) specs.push({ label: 'Material', value: p.material });
+            if (p.color) specs.push({ label: 'Color', value: p.color });
+            if (p.brand) specs.push({ label: 'Brand', value: p.brand });
+            const stockStatus = (p.stock === undefined || p.stock > 0) ? { text: 'In Stock', class: 'stock-in', icon: 'fa-check' } : { text: 'Out of Stock', class: 'stock-out', icon: 'fa-times' };
+            const html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="bg-white rounded-xl shadow-md overflow-hidden">${Gallery.render()}</div><div class="bg-white rounded-xl shadow-md p-6"><div class="flex justify-between"><span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">${p.category || 'General'}</span><span class="${stockStatus.class} stock-badge"><i class="fas ${stockStatus.icon} mr-1"></i>${stockStatus.text}</span></div><h1 class="text-2xl font-bold mt-3">${p.title || p.name}</h1><div class="text-3xl font-bold text-indigo-600 mt-3">Rs. ${price.toFixed(2)}</div><p class="text-gray-600 mt-4">${p.description || 'Premium quality product. Order now for fast delivery.'}</p>${tagsHTML ? `<div class="mt-3 flex flex-wrap">${tagsHTML}</div>` : ''}<div class="product-specs-grid">${specs.map(s => `<div class="spec-item"><span class="spec-label">${s.label}</span><span class="spec-value">${s.value}</span></div>`).join('')}</div><div class="action-buttons"><button class="action-btn buy-now-btn" id="buyNowMainBtn"><i class="fas fa-bolt"></i> Buy Now</button><button class="action-btn share-product-btn" id="shareProductBtn"><i class="fas fa-share-alt"></i> Share</button></div></div></div><div class="shop-info-card mt-6"><div class="shop-header"><img src="${currentShop?.logo || 'image/logo.png'}" class="shop-avatar" onerror="this.src='image/logo.png'"><div><h2 class="shop-name">${currentShop?.name || shopMeta.website.name}</h2><p class="text-sm text-gray-500">${currentShop?.description || shopMeta.website.tagline}</p></div></div><div class="contact-info"><i class="fas fa-phone-alt"></i><span class="ml-2">${currentShop?.phone || shopMeta.contact.phone}</span><button id="contactSellerBtn" class="contact-seller-btn ml-auto"><i class="fas fa-phone mr-1"></i>Call Seller</button></div></div>`;
+            container.innerHTML = html;
+            document.getElementById('loadingState').classList.add('hidden');
+            container.classList.remove('hidden');
+            setTimeout(() => container.classList.add('loaded'), 80);
+            Gallery.attachEvents();
+            document.getElementById('buyNowMainBtn')?.addEventListener('click', openOrderModal);
+            document.getElementById('shareProductBtn')?.addEventListener('click', () => openShareModal());
+            document.getElementById('contactSellerBtn')?.addEventListener('click', () => { if (currentShop?.phone) window.location.href = `tel:${currentShop.phone.replace(/\s/g, '')}`; else showToast('Contact info not available', 'error'); });
+        }
+
+        function openOrderModal() {
+            if (!currentProduct) return;
+            document.getElementById('orderProductId').value = currentProduct.id;
+            document.getElementById('orderQuantity').value = 1;
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('shippingAddress').value = '';
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function setupOrderModal() {
+            const modal = document.getElementById('orderModal');
+            document.getElementById('orderClose').onclick = () => modal.classList.remove('active');
+            document.getElementById('orderCancel').onclick = () => modal.classList.remove('active');
+            document.getElementById('orderSubmit').onclick = async () => {
+                const prodId = document.getElementById('orderProductId').value;
+                const name = document.getElementById('customerName').value.trim();
+                const phone = document.getElementById('customerPhone').value.trim();
+                const email = document.getElementById('customerEmail').value.trim();
+                const addr = document.getElementById('shippingAddress').value.trim();
+                const qty = parseInt(document.getElementById('orderQuantity').value);
+                const notes = document.getElementById('orderNotes').value;
+                if (!name || !phone || !email || !addr) { showToast('Please fill all required fields', 'error'); return; }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Invalid email', 'error'); return; }
+                if (qty < 1) { showToast('Invalid quantity', 'error'); return; }
+                const orderData = {
+                    productId: prodId, ownerId: currentProduct?.ownerId || 'unknown', customerName: name, customerPhone: phone, customerEmail: email,
+                    shippingAddress: addr, quantity: qty, notes: notes, productTitle: currentProduct?.title || currentProduct?.name || 'Product',
+                    productPrice: parseFloat(currentProduct?.price) || 0, totalAmount: (parseFloat(currentProduct?.price) || 0) * qty, status: 'pending'
+                };
+                await submitOrder(orderData);
+            };
+            modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+        }
+
+        function openShareModal() {
+            const linkInput = document.getElementById('shareLinkInput');
+            if (linkInput) linkInput.value = window.location.href;
+            document.getElementById('shareModal').classList.add('active');
+        }
+
+        function setupShareModal() {
+            const modal = document.getElementById('shareModal');
+            document.getElementById('shareCancelBtn')?.addEventListener('click', () => modal.classList.remove('active'));
+            document.querySelectorAll('.share-platform').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const platform = btn.getAttribute('data-platform');
+                    const url = encodeURIComponent(window.location.href);
+                    const title = encodeURIComponent(currentProduct?.title || 'Product');
+                    let shareUrl = '';
+                    if (platform === 'whatsapp') shareUrl = `https://wa.me/?text=${title}%20${url}`;
+                    else if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                    else if (platform === 'twitter') shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+                    else if (platform === 'copy') { navigator.clipboard.writeText(window.location.href); showToast('Link copied!'); modal.classList.remove('active'); return; }
+                    if (shareUrl) window.open(shareUrl, '_blank');
+                    modal.classList.remove('active');
+                });
+            });
+            modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+        }
+
+
+        function renderFooter(shopMeta) {
+                // Logo
+                document.getElementById("footerLogo").src =
+                    shopMeta?.website?.logo || "image/logo.png";
+
+                // Tagline / description
+                document.getElementById("footerTagline").textContent =
+                    shopMeta?.website?.tagline ||
+                    shopMeta?.website?.description ||
+                    "";
+
+                // Brand name + year
+                document.getElementById("footerBrand").textContent =
+                    shopMeta?.website?.name || "Shop";
+
+                document.getElementById("footerYear").textContent =
+                    new Date().getFullYear();
+
+                // Links (static or can be dynamic later)
+                document.getElementById("linkAbout").href = "shopMeta.html?page=about";
+                document.getElementById("linkPrivacy").href = "shopMeta.html?page=privacy";
+                document.getElementById("linkContact").href = "shopMeta.html?page=contact";
+
+                document.getElementById("linkReturn").href = "shopMeta.html?page=return";
+                document.getElementById("linkShipping").href = "shopMeta.html?page=shipping";
+
+                // Social links
+                const social = shopMeta?.contact?.social || {};
+                const socialLinks = document.getElementById("socialLinks");
+
+                socialLinks.innerHTML = `
+        ${social.facebook ? `<a href="${social.facebook}" target="_blank"><i class="fab fa-facebook"></i></a>` : ""}
+        ${social.instagram ? `<a href="${social.instagram}" target="_blank"><i class="fab fa-instagram"></i></a>` : ""}
+        ${social.tiktok ? `<a href="${social.tiktok}" target="_blank"><i class="fab fa-tiktok"></i></a>` : ""}
+    `;
+            }
+
+
+
+
+  function updateMetaTags(shopMeta) {
+    const name = shopMeta?.website?.name || "Shop";
+    const desc = shopMeta?.website?.description || "";
+    const logo = shopMeta?.website?.logo || "image/logo.png";
+
+    const fullDescription = `${desc}`;
+
+    const keywords =
+        "online shopping Pakistan, secure checkout, trusted store, fast delivery, 7 days return";
+
+    // Title
+    document.getElementById("metaTitle").textContent = `${name} | Secure Checkout`;
+
+    // Meta tags
+    document.getElementById("metaDescription")
+        ?.setAttribute("content", fullDescription);
+
+    document.getElementById("metaKeywords")
+        ?.setAttribute("content", keywords);
+
+    document.getElementById("metaAuthor")
+        ?.setAttribute("content", name);
+
+    // Favicon
+    document.getElementById("metaFavicon")
+        ?.setAttribute("href", logo);
+
+    // Open Graph
+    document.getElementById("ogTitle")
+        ?.setAttribute("content", name);
+
+    document.getElementById("ogDescription")
+        ?.setAttribute("content", fullDescription);
+
+    document.getElementById("ogImage")
+        ?.setAttribute("content", logo);
+}
+
+
+
+
+        function showNotFound() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('productNotFound').classList.remove('hidden');
+        }
+
+        function handleSearch(term) {
+            if (term.trim()) window.location.href = `index.html?search=${encodeURIComponent(term)}`;
+        }
+
+        // Apply shopMeta on load
+        applyShopMetaData();
+            updateMetaTags(shopMeta);
+            renderFooter(shopMeta)
+        document.addEventListener('DOMContentLoaded', () => {
+            setupOrderModal();
+            setupShareModal();
+            loadProduct();
+            document.getElementById('searchForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleSearch(document.getElementById('searchInput').value); });
+            document.getElementById('mobileSearchForm')?.addEventListener('submit', (e) => { e.preventDefault(); handleSearch(document.getElementById('mobileSearchInput').value); });
+            document.getElementById('mobileSearchBtn')?.addEventListener('click', () => document.getElementById('mobileSearchContainer').classList.toggle('hidden'));
+            document.getElementById('homeLink')?.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'index.html'; });
+            document.getElementById('bottomOrdersLink')?.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'index.html'; });
+        });
+    </script>
+</body>
+
+</html>
